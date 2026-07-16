@@ -4,13 +4,16 @@
 
 ## 文档
 
+- [完整产品 PRD（Markdown）](docs/prd-super-ip-agent-v1.0.md)
 - [开发 PRD：架构、模块、接口、任务和验收](docs/developer-prd.md)
 - [PRD：Human IP Studio 本地优先 AI 口播智能体](docs/prd-human-ip-studio.md)
 - [开发成本评估](docs/development-cost-estimate.md)
 - [资料拆解与竞品机会点](docs/source-research.md)
 
-## 客户报价
+## 可下载文件
 
+- [超级 IP 智能体完整产品 PRD（Word）](deliverables/超级IP智能体产品需求文档_PRD_V1.0.docx)
+- [超级 IP 智能体完整产品 PRD（PDF）](deliverables/超级IP智能体产品需求文档_PRD_V1.0.pdf)
 - [超级 IP 智能体项目报价单（Word 客户版）](deliverables/超级IP智能体项目报价单_客户版.docx)
 
 ## 核心约束
