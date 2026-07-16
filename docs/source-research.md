@@ -4,9 +4,11 @@
 
 用户提供的两份飞书资料：
 
-1. 旗博士口播智能体 3.0 详细使用教程  
+1. 旗博士口播智能体 3.0 详细使用教程
+
    https://xa8k8qzrnlp.feishu.cn/docx/JlAOdfKjfogpkExyXYxcofJ0nBb
-2. 免费超级 IP 智能体（内测版）  
+2. 免费超级 IP 智能体（内测版）
+
    https://5x-class.feishu.cn/wiki/SEbcwBFO0iS98ekvBwHc0KTzndf
 
 补充参考：
