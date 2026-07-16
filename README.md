@@ -9,9 +9,9 @@
 - [开发成本评估](docs/development-cost-estimate.md)
 - [资料拆解与竞品机会点](docs/source-research.md)
 
-## 客户交付
+## 客户报价
 
-- [超级 IP 智能体项目开发与合作方案（Word 客户版）](deliverables/超级IP智能体项目开发与合作方案_客户版.docx)
+- [超级 IP 智能体项目报价单（Word 客户版）](deliverables/超级IP智能体项目报价单_客户版.docx)
 
 ## 核心约束
 
