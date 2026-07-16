@@ -4,6 +4,7 @@
 
 ## 文档
 
+- [开发 PRD：架构、模块、接口、任务和验收](docs/developer-prd.md)
 - [PRD：Human IP Studio 本地优先 AI 口播智能体](docs/prd-human-ip-studio.md)
 - [开发成本评估](docs/development-cost-estimate.md)
 - [资料拆解与竞品机会点](docs/source-research.md)
