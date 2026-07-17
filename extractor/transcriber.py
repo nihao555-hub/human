@@ -44,17 +44,23 @@ def _ts(seconds: float) -> str:
     return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
 
 
-def transcribe(audio_path: str | Path, device: str = "cpu") -> Transcript:
-    """转写音频，返回全文与带时间戳分段。"""
+def load_model(device: str = "cpu"):
+    """加载 FunASR 模型（约 40s），常驻服务可复用以避免每次重新加载。"""
     from funasr import AutoModel
 
-    model = AutoModel(
+    return AutoModel(
         model=MODEL,
         vad_model=VAD_MODEL,
         punc_model=PUNC_MODEL,
         device=device,
         disable_update=True,
     )
+
+
+def transcribe(audio_path: str | Path, device: str = "cpu", model=None) -> Transcript:
+    """转写音频，返回全文与带时间戳分段。可传入已加载的模型。"""
+    if model is None:
+        model = load_model(device)
     results = model.generate(
         input=str(audio_path),
         sentence_timestamp=True,

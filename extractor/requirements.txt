@@ -3,3 +3,5 @@ funasr>=1.2.6
 modelscope>=1.26.0
 torch>=2.3
 torchaudio>=2.3
+fastapi>=0.115
+uvicorn>=0.30
