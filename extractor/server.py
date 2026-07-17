@@ -25,6 +25,7 @@ from .downloader import download_audio
 from .rewriter import rewrite as rewrite_text
 from .transcriber import load_model, transcribe
 from .tts import clone_speak, load_tts
+from .tts_indextts import clone_speak_indextts
 
 _state: dict = {}
 _lock = threading.Lock()  # FunASR 模型非线程安全，串行化推理
@@ -57,8 +58,9 @@ class RewriteRequest(BaseModel):
 class TtsRequest(BaseModel):
     text: str
     prompt_audio: str  # 参考音频路径（5-15s 纯人声）
-    prompt_text: str  # 参考音频对应的原话
+    prompt_text: str | None = None  # 参考音频对应的原话（cosyvoice 必填，indextts 不需）
     out_path: str = "outputs/tts.wav"
+    engine: str = "cosyvoice"  # cosyvoice / indextts
 
 
 @app.get("/healthz")
@@ -103,6 +105,15 @@ def extract(req: ExtractRequest):
 
 @app.post("/tts")
 def tts(req: TtsRequest):
+    if req.engine == "indextts":
+        try:
+            out = clone_speak_indextts(req.text, req.prompt_audio, req.out_path)
+        except RuntimeError as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        return {"audio_path": str(out), "engine": "indextts"}
+
+    if not req.prompt_text:
+        raise HTTPException(status_code=400, detail="cosyvoice 引擎需提供 prompt_text")
     with _lock:
         if "tts" not in _state:
             _state["tts"] = load_tts()  # 首次调用时加载（CPU 约 1-2 分钟）
@@ -113,7 +124,7 @@ def tts(req: TtsRequest):
             )
         except FileNotFoundError as e:
             raise HTTPException(status_code=422, detail=str(e))
-    return {"audio_path": str(out)}
+    return {"audio_path": str(out), "engine": "cosyvoice"}
 
 
 @app.post("/rewrite")

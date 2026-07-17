@@ -75,6 +75,18 @@ curl -X POST http://127.0.0.1:8300/tts -H "Content-Type: application/json" \
 
 路径可用 `COSYVOICE_DIR` / `COSYVOICE_MODEL` 环境变量覆盖。注意 `transformers` 必须为 4.51.x（5.x 不兼容）。CPU 推理较慢（约 7-8x 实时）；MiniMax 等云端 TTS 可作为速度兜底后续接入。
 
+### 备选引擎：IndexTTS2
+
+`/tts` 请求加 `"engine": "indextts"` 可切换到 B 站开源的 IndexTTS2（无需 prompt_text，只要参考音频；情感表现力更强）。因其依赖（torch 2.8 / transformers 4.52）与主环境冲突，通过独立 uv 虚拟环境以子进程运行：
+
+```bash
+git clone https://github.com/index-tts/index-tts.git ~/index-tts
+cd ~/index-tts && uv sync -p python3.10
+python3 -c "from modelscope import snapshot_download; snapshot_download('IndexTeam/IndexTTS-2', local_dir='/home/ubuntu/index-tts/checkpoints')"
+```
+
+仓库路径可用 `INDEXTTS_DIR` 覆盖。模型约 8GB，加载+推理内存占用大（8GB 内存机器需 ≥12G swap），CPU 上比 CosyVoice2 慢数倍（RTF≈16），更适合 GPU 环境。
+
 ## 内存要求
 
 Paraformer-large CPU 推理峰值内存约 6-8GB；内存不足时建议开启 swap 或使用 GPU。
