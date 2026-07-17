@@ -22,6 +22,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from .downloader import download_audio
+from .rewriter import rewrite as rewrite_text
 from .transcriber import load_model, transcribe
 
 _state: dict = {}
@@ -43,6 +44,13 @@ class ExtractRequest(BaseModel):
     url: str
     cookies_file: str | None = None
     cookies_from_browser: str | None = None
+    rewrite: str | None = None  # 改写要求，提供则同时返回 rewritten
+
+
+class RewriteRequest(BaseModel):
+    text: str
+    instruction: str
+    model: str | None = None
 
 
 @app.get("/healthz")
@@ -65,6 +73,13 @@ def extract(req: ExtractRequest):
     with _lock:
         transcript = transcribe(dl.audio_path, model=_state["model"])
 
+    rewritten = None
+    if req.rewrite:
+        try:
+            rewritten = rewrite_text(transcript.text, req.rewrite)
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"改写失败: {e}")
+
     return {
         "url": dl.webpage_url,
         "platform": dl.platform,
@@ -74,4 +89,15 @@ def extract(req: ExtractRequest):
         "text": transcript.text,
         "segments": [dataclasses.asdict(s) for s in transcript.segments],
         "srt": transcript.to_srt(),
+        "rewritten": rewritten,
     }
+
+
+@app.post("/rewrite")
+def rewrite(req: RewriteRequest):
+    try:
+        return {"rewritten": rewrite_text(req.text, req.instruction, model=req.model)}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"改写失败: {e}")

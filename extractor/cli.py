@@ -27,6 +27,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--device", default="cpu", help="推理设备: cpu / cuda:0")
     parser.add_argument("--json", dest="json_path", help="结果 JSON 输出路径")
     parser.add_argument("--srt", dest="srt_path", help="SRT 字幕输出路径")
+    parser.add_argument(
+        "--rewrite", dest="rewrite_instruction",
+        help="改写要求（需设置 DEEPSEEK_API_KEY），如：改写成更口语化的带货风格"
+    )
     args = parser.parse_args(argv)
 
     print(f"[1/2] 下载音频: {args.url}", file=sys.stderr)
@@ -44,6 +48,13 @@ def main(argv: list[str] | None = None) -> int:
     print("[2/2] FunASR 转写中（首次运行需下载模型）...", file=sys.stderr)
     transcript = transcribe(dl.audio_path, device=args.device)
 
+    rewritten = None
+    if args.rewrite_instruction:
+        from .rewriter import rewrite
+
+        print("[3/3] DeepSeek 改写中...", file=sys.stderr)
+        rewritten = rewrite(transcript.text, args.rewrite_instruction)
+
     if args.json_path:
         payload = {
             "url": dl.webpage_url,
@@ -54,6 +65,8 @@ def main(argv: list[str] | None = None) -> int:
             "text": transcript.text,
             "segments": [dataclasses.asdict(s) for s in transcript.segments],
         }
+        if rewritten is not None:
+            payload["rewritten"] = rewritten
         Path(args.json_path).write_text(
             json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
         )
@@ -63,6 +76,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"SRT 已写入 {args.srt_path}", file=sys.stderr)
 
     print(transcript.text)
+    if rewritten is not None:
+        print("\n===== 改写后 =====\n", file=sys.stderr)
+        print(rewritten)
     return 0
 
 

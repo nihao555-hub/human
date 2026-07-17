@@ -41,6 +41,23 @@ curl -X POST http://127.0.0.1:8300/extract \
 
 返回 JSON 含 `text`（全文）、`segments`（句级时间戳）、`srt`（字幕文本）。健康检查：`GET /healthz`。
 
+## 文案改写（DeepSeek API）
+
+设置环境变量 `DEEPSEEK_API_KEY` 后，可按自定义要求改写提取出的文案（LLM 为流程中唯一使用 API 的环节）：
+
+```bash
+# CLI：提取 + 改写一步到位
+python -m extractor.cli "<链接>" --rewrite "改写成更口语化的风格，突出悬念"
+
+# 服务：单独改写已有文案
+curl -X POST http://127.0.0.1:8300/rewrite \
+    -H "Content-Type: application/json" \
+    -d '{"text": "原始文案...", "instruction": "改写要求..."}'
+# 或在 /extract 请求中带上 "rewrite": "改写要求"，一次返回原文+改写稿
+```
+
+可通过 `DEEPSEEK_BASE_URL` / `DEEPSEEK_MODEL` 切换到其他 OpenAI 兼容供应商（如通义千问）。
+
 ## 内存要求
 
 Paraformer-large CPU 推理峰值内存约 6-8GB；内存不足时建议开启 swap 或使用 GPU。
