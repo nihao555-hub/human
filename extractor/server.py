@@ -24,6 +24,7 @@ from pydantic import BaseModel
 from .downloader import download_audio
 from .rewriter import rewrite as rewrite_text
 from .transcriber import load_model, transcribe
+from .tts import clone_speak, load_tts
 
 _state: dict = {}
 _lock = threading.Lock()  # FunASR 模型非线程安全，串行化推理
@@ -51,6 +52,13 @@ class RewriteRequest(BaseModel):
     text: str
     instruction: str
     model: str | None = None
+
+
+class TtsRequest(BaseModel):
+    text: str
+    prompt_audio: str  # 参考音频路径（5-15s 纯人声）
+    prompt_text: str  # 参考音频对应的原话
+    out_path: str = "outputs/tts.wav"
 
 
 @app.get("/healthz")
@@ -91,6 +99,21 @@ def extract(req: ExtractRequest):
         "srt": transcript.to_srt(),
         "rewritten": rewritten,
     }
+
+
+@app.post("/tts")
+def tts(req: TtsRequest):
+    with _lock:
+        if "tts" not in _state:
+            _state["tts"] = load_tts()  # 首次调用时加载（CPU 约 1-2 分钟）
+        try:
+            out = clone_speak(
+                req.text, req.prompt_audio, req.prompt_text, req.out_path,
+                model=_state["tts"],
+            )
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=422, detail=str(e))
+    return {"audio_path": str(out)}
 
 
 @app.post("/rewrite")

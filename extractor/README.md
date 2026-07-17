@@ -58,6 +58,23 @@ curl -X POST http://127.0.0.1:8300/rewrite \
 
 可通过 `DEEPSEEK_BASE_URL` / `DEEPSEEK_MODEL` 切换到其他 OpenAI 兼容供应商（如通义千问）。
 
+## 声音克隆 TTS（本地 CosyVoice2）
+
+零样本声音克隆：参考音频（原视频中 5-15s 纯人声）+ 对应原话 → 用该音色朗读任意新文案。
+
+```bash
+# 一次性准备
+git clone --recurse-submodules https://github.com/FunAudioLLM/CosyVoice.git ~/CosyVoice
+pip install -r extractor/requirements-tts.txt
+python3 -c "from modelscope import snapshot_download; snapshot_download('iic/CosyVoice2-0.5B', local_dir='/home/ubuntu/models/CosyVoice2-0.5B')"
+
+# 服务接口（首次调用时加载模型）
+curl -X POST http://127.0.0.1:8300/tts -H "Content-Type: application/json" \
+    -d '{"text": "要朗读的新文案", "prompt_audio": "/path/ref.wav", "prompt_text": "参考音频里的原话", "out_path": "outputs/tts.wav"}'
+```
+
+路径可用 `COSYVOICE_DIR` / `COSYVOICE_MODEL` 环境变量覆盖。注意 `transformers` 必须为 4.51.x（5.x 不兼容）。CPU 推理较慢（约 7-8x 实时）；MiniMax 等云端 TTS 可作为速度兜底后续接入。
+
 ## 内存要求
 
 Paraformer-large CPU 推理峰值内存约 6-8GB；内存不足时建议开启 swap 或使用 GPU。
