@@ -23,6 +23,7 @@ from pydantic import BaseModel
 
 from .downloader import download_audio
 from .rewriter import rewrite as rewrite_text
+from .similarity import DEFAULT_THRESHOLD, load_sv, speaker_similarity
 from .transcriber import load_model, transcribe
 from .tts import clone_speak, load_tts
 from .tts_indextts import clone_speak_indextts
@@ -61,6 +62,12 @@ class TtsRequest(BaseModel):
     prompt_text: str | None = None  # 参考音频对应的原话（cosyvoice 必填，indextts 不需）
     out_path: str = "outputs/tts.wav"
     engine: str = "cosyvoice"  # cosyvoice / indextts
+
+
+class SimilarityRequest(BaseModel):
+    reference: str  # 参考音频路径（原视频截取的人声）
+    cloned: str  # 克隆产出的音频路径
+    threshold: float = DEFAULT_THRESHOLD
 
 
 @app.get("/healthz")
@@ -125,6 +132,21 @@ def tts(req: TtsRequest):
         except FileNotFoundError as e:
             raise HTTPException(status_code=422, detail=str(e))
     return {"audio_path": str(out), "engine": "cosyvoice"}
+
+
+@app.post("/similarity")
+def similarity(req: SimilarityRequest):
+    with _lock:
+        if "sv" not in _state:
+            _state["sv"] = load_sv()  # 首次调用时加载说话人验证模型
+        try:
+            result = speaker_similarity(
+                req.reference, req.cloned,
+                pipe=_state["sv"], threshold=req.threshold,
+            )
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=422, detail=str(e))
+    return result.to_dict()
 
 
 @app.post("/rewrite")

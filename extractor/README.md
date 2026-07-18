@@ -87,6 +87,22 @@ python3 -c "from modelscope import snapshot_download; snapshot_download('IndexTe
 
 仓库路径可用 `INDEXTTS_DIR` 覆盖。模型约 8GB，加载+推理内存占用大（8GB 内存机器需 ≥12G swap），CPU 上比 CosyVoice2 慢数倍（RTF≈16），更适合 GPU 环境。
 
+## 声纹相似度质检（克隆音色 vs 原音色）
+
+声音克隆后，用说话人验证模型客观衡量“克隆音频”与“原视频参考音频”的音色相似度（余弦相似度，越接近 1 越像同一人）：
+
+```bash
+# CLI
+python -m extractor.similarity 原视频参考.wav 克隆输出.wav
+# {"score": 0.78, "same_speaker": true, "threshold": 0.35}
+
+# 服务接口（首次调用时加载模型，约 28MB）
+curl -X POST http://127.0.0.1:8300/similarity -H "Content-Type: application/json" \
+    -d '{"reference": "/path/ref.wav", "cloned": "/path/tts_out.wav"}'
+```
+
+采用 3D-Speaker [CAM++](https://www.modelscope.cn/models/iic/speech_campplus_sv_zh-cn_16k-common) 中文说话人验证模型（ModelScope，本地推理）。`score` 为两段音频说话人嵌入的余弦相似度，`same_speaker` 按 `threshold`（默认 0.35，可调）判定。适合作为克隆环节的自动质检门槛，也可用来横向对比不同 TTS 引擎（CosyVoice2 / IndexTTS2）的克隆保真度。
+
 ## 内存要求
 
 Paraformer-large CPU 推理峰值内存约 6-8GB；内存不足时建议开启 swap 或使用 GPU。
