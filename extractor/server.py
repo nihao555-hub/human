@@ -142,7 +142,7 @@ def similarity(req: SimilarityRequest):
         try:
             result = speaker_similarity(
                 req.reference, req.cloned,
-                pipe=_state["sv"], threshold=req.threshold,
+                sess=_state["sv"], threshold=req.threshold,
             )
         except FileNotFoundError as e:
             raise HTTPException(status_code=422, detail=str(e))

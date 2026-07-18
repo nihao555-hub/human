@@ -94,14 +94,16 @@ python3 -c "from modelscope import snapshot_download; snapshot_download('IndexTe
 ```bash
 # CLI
 python -m extractor.similarity 原视频参考.wav 克隆输出.wav
-# {"score": 0.78, "same_speaker": true, "threshold": 0.35}
+# {"score": 0.8073, "same_speaker": true, "threshold": 0.5}
 
-# 服务接口（首次调用时加载模型，约 28MB）
+# 服务接口（首次调用时加载模型）
 curl -X POST http://127.0.0.1:8300/similarity -H "Content-Type: application/json" \
     -d '{"reference": "/path/ref.wav", "cloned": "/path/tts_out.wav"}'
 ```
 
-采用 3D-Speaker [CAM++](https://www.modelscope.cn/models/iic/speech_campplus_sv_zh-cn_16k-common) 中文说话人验证模型（ModelScope，本地推理）。`score` 为两段音频说话人嵌入的余弦相似度，`same_speaker` 按 `threshold`（默认 0.35，可调）判定。适合作为克隆环节的自动质检门槛，也可用来横向对比不同 TTS 引擎（CosyVoice2 / IndexTTS2）的克隆保真度。
+采用 3D-Speaker CAM++ 中文说话人验证模型（`campplus.onnx`，与 CosyVoice2 提取音色嵌入用的是同一模型），onnxruntime 本地推理、kaldi fbank 特征，无 sox 依赖，CPU 友好。默认从 `COSYVOICE_MODEL` 目录读取 `campplus.onnx`（即 CosyVoice2-0.5B 内已自带），也可用 `CAMPPLUS_ONNX` 环境变量或 `--model` 指定。需安装 `requirements-tts.txt`（含 onnxruntime / librosa）。
+
+`score` 为两段音频说话人嵌入的余弦相似度，`same_speaker` 按 `threshold`（默认 0.5，可调）判定。适合作为克隆环节的自动质检门槛，也可用来横向对比不同 TTS 引擎（CosyVoice2 / IndexTTS2）的克隆保真度。实测参考：同一说话人的 CosyVoice2 克隆 vs 原音色 ≈ 0.81，不同说话人之间 ≈ 0.09-0.13。
 
 ## 内存要求
 
