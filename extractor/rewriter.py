@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 
 DEFAULT_BASE_URL = "https://api.deepseek.com"
-DEFAULT_MODEL = "deepseek-chat"
+DEFAULT_MODEL = "deepseek-v4-flash"
 
 SYSTEM_PROMPT = (
     "你是短视频口播文案改写专家。根据用户的改写要求，把给定的口播文案改写成"
