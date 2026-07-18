@@ -105,6 +105,29 @@ curl -X POST http://127.0.0.1:8300/similarity -H "Content-Type: application/json
 
 `score` 为两段音频说话人嵌入的余弦相似度，`same_speaker` 按 `threshold`（默认 0.5，可调）判定。适合作为克隆环节的自动质检门槛，也可用来横向对比不同 TTS 引擎（CosyVoice2 / IndexTTS2）的克隆保真度。实测参考：同一说话人的 CosyVoice2 克隆 vs 原音色 ≈ 0.81，不同说话人之间 ≈ 0.09-0.13。
 
+## 原视频对口型（本地 MuseTalk V1.5）
+
+把第三步的配音贴回原视频人脸，使口型与新配音对齐（本地主选 MuseTalk，LatentSync/云端可后续兜底）。
+
+```bash
+# 一次性准备（独立虚拟环境，依赖 torch2.0.1/mmcv/mmpose，与主环境隔离）
+git clone https://github.com/TMElyralab/MuseTalk.git ~/MuseTalk
+cd ~/MuseTalk && python3 -m venv .venv && source .venv/bin/activate
+pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cpu
+pip install -r requirements.txt && pip install -U openmim
+pip install "setuptools<70" && pip install chumpy==0.70 --no-build-isolation  # 否则 mmpose 装不上
+mim install mmengine "mmcv==2.0.1" "mmdet==3.1.0" "mmpose==1.1.0"
+bash download_weights.sh   # 注意新版 gdown 需用 `gdown <id> -O ...`（去掉 --id）；huggingface-cli 改用 `hf download`
+
+# CLI
+python -m extractor.lipsync 原视频.mp4 配音.wav 输出.mp4
+# 服务接口
+curl -X POST http://127.0.0.1:8300/lipsync -H "Content-Type: application/json" \
+    -d '{"video_path": "/path/src.mp4", "audio_path": "/path/tts_out.wav", "out_path": "outputs/lipsync.mp4"}'
+```
+
+仓库路径可用 `MUSETALK_DIR` 覆盖。输入建议 25fps；`bbox_shift` 可微调张口幅度。**MuseTalk 依赖与主环境冲突，故在独立 venv 内以子进程运行**。CPU 上为逐帧生成，非常慢（约每帧 1-2s 面部关键点 + 生成，10s 视频需十几分钟），生产强烈建议 GPU。
+
 ## 内存要求
 
 Paraformer-large CPU 推理峰值内存约 6-8GB；内存不足时建议开启 swap 或使用 GPU。

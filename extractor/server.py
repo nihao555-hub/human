@@ -22,6 +22,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from .downloader import download_audio
+from .lipsync import lipsync
 from .rewriter import rewrite as rewrite_text
 from .similarity import DEFAULT_THRESHOLD, load_sv, speaker_similarity
 from .transcriber import load_model, transcribe
@@ -68,6 +69,14 @@ class SimilarityRequest(BaseModel):
     reference: str  # 参考音频路径（原视频截取的人声）
     cloned: str  # 克隆产出的音频路径
     threshold: float = DEFAULT_THRESHOLD
+
+
+class LipsyncRequest(BaseModel):
+    video_path: str  # 含人脸的原视频
+    audio_path: str  # 驱动音频（配音）
+    out_path: str = "outputs/lipsync.mp4"
+    version: str = "v15"  # v15 / v1
+    bbox_shift: int = 0
 
 
 @app.get("/healthz")
@@ -147,6 +156,20 @@ def similarity(req: SimilarityRequest):
         except FileNotFoundError as e:
             raise HTTPException(status_code=422, detail=str(e))
     return result.to_dict()
+
+
+@app.post("/lipsync")
+def lipsync_endpoint(req: LipsyncRequest):
+    try:
+        out = lipsync(
+            req.video_path, req.audio_path, req.out_path,
+            version=req.version, bbox_shift=req.bbox_shift,
+        )
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return {"video_path": str(out), "engine": "musetalk", "version": req.version}
 
 
 @app.post("/rewrite")
