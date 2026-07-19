@@ -12,6 +12,7 @@ CPU 上为逐帧生成，速度较慢（约实时的数十倍），生产建议 
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -92,7 +93,8 @@ def lipsync(
         )
         if not produced:
             raise RuntimeError(f"MuseTalk 未产出视频。stderr: {proc.stderr[-1000:]}")
-        Path(produced[-1]).replace(out_path)
+        # shutil.move 处理跨文件系统（/tmp 与目标目录不同盘）情形，Path.replace 会失败
+        shutil.move(str(produced[-1]), str(out_path))
     return out_path
 
 
