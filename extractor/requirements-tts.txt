@@ -1,0 +1,25 @@
+# 声音克隆（CosyVoice2 本地推理）额外依赖
+# 另需克隆官方仓库: git clone --recurse-submodules https://github.com/FunAudioLLM/CosyVoice.git ~/CosyVoice
+# 模型下载: modelscope snapshot_download('iic/CosyVoice2-0.5B', local_dir='~/models/CosyVoice2-0.5B')
+transformers==4.51.3  # 5.x 会导致 LLM 生成异常（token2wav 输入过短报错）
+conformer==0.3.2
+diffusers
+hydra-core
+HyperPyYAML
+inflect
+librosa
+omegaconf
+onnxruntime
+pyworld
+soundfile
+x-transformers
+WeTextProcessing
+openai-whisper
+lightning
+gdown
+matplotlib
+wget
+torchdyn
+beartype
+pandas
+torchcodec
